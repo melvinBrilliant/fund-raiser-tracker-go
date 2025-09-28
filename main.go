@@ -6,22 +6,26 @@ import (
 	"log"
 	"time"
 
-	"id.melvin/config"
-	"id.melvin/fund"
+	"tracker/config"
+	"tracker/fund"
 )
 
 func main() {
 	config.InitConfig()
-	fmt.Println(*config.SheetId)
+	log.Println("SheetID: " + *config.SheetId)
+	log.Println("GID: " + *config.Gid)
+	log.Println("IntervalSeconds: " + fmt.Sprint(*config.IntervalSeconds))
+	log.Println("TotalFunds: " + fmt.Sprint(*config.TotalFunds))
 	runProcess()
 }
 
 func runProcess() {
+	log.Println("Starting fund tracker...")
+	fund.WriteFundsToTxt()
 	runOnce := flag.String("once", "n", "Run once without scheduling")
 	flag.Parse()
 	if (runOnce != nil && *runOnce == "y") {
 		log.Println("Running once without scheduling...")
-		fund.WriteFundsToTxt()
 		return
 	} else {
 		scheduledProcess()
@@ -31,11 +35,8 @@ func runProcess() {
 func scheduledProcess() {
 	ticker := time.NewTicker(time.Duration(*config.IntervalSeconds) * time.Second)
 	defer ticker.Stop()
-	for {
-		select {
-		case <-ticker.C:
-			log.Println("Scheduled task running...")
-			fund.WriteFundsToTxt()
-		}
+	for t := range ticker.C {
+		log.Printf("Scheduled task running at %v...\n", t)
+		fund.WriteFundsToTxt()
 	}
 }

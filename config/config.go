@@ -14,7 +14,7 @@ var (
 func InitConfig() {
 	SheetId = flag.String("sheetid", "1zHfOOSsIrXjlPqiaJgRfC5xzo39ZD56AUoCIyojhonI", "Google Sheet ID")
 	Gid = flag.String("gid", "1039232989", "Google Sheet GID")
-	IntervalSeconds = flag.Int("interval", 30, "Interval in seconds")
-	TotalFunds = flag.Int("total", 5, "Total funds to show")
+	IntervalSeconds = flag.Int("interval", 20, "Interval in seconds")
+	TotalFunds = flag.Int("total", 4, "Total funds to show")
 	flag.Parse()
 }

@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"golang.org/x/text/message"
-	"id.melvin/config"
+	"tracker/config"
 )
 
 type Fund struct {
@@ -24,13 +24,13 @@ type Fund struct {
 }
 
 func downloadCSV() {
-	url := fmt.Sprintf("https://docs.google.com/spreadsheets/d/%s/export?format=csv&gid=%s", config.SheetId, config.Gid)
+	url := fmt.Sprintf("https://docs.google.com/spreadsheets/d/%s/export?format=csv&gid=%s", *config.SheetId, *config.Gid)
 	resp, err := http.Get(url)
 	if err != nil {
 		panic(err)
 	}
 	if resp.StatusCode != http.StatusOK {
-		log.Fatalf("Failed to download sheet (gid=%s): %s", config.Gid, resp.Status)
+		log.Fatalf("Failed to download sheet (gid=%s): %s", *config.Gid, resp.Status)
 	}
 	defer resp.Body.Close()
 	out, err := os.Create("Sheet.csv")
@@ -55,13 +55,13 @@ func mapTimestamp(s string) time.Time {
 }
 
 func mapCsvRow(row []string) Fund {
-	amountFloat, _ := strconv.ParseFloat(row[2], 64)
+	amountFloat, _ := strconv.ParseFloat(row[4], 64)
 	return Fund{
 		timestamp: mapTimestamp(row[0]),
-		Name:      row[1],
+		Name:      row[2],
 		Amount:    amountFloat,
-		Source:    row[3],
-		Notes:     row[4],
+		Source:    row[1],
+		Notes:     row[3],
 	}
 }
 
