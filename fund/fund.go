@@ -7,18 +7,16 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"strconv"
 	"strings"
 	"time"
 
-	"golang.org/x/text/message"
 	"tracker/config"
 )
 
 type Fund struct {
 	timestamp time.Time
 	Name      string
-	Amount    float64
+	Amount    string
 	Source    string
 	Notes     string
 }
@@ -55,13 +53,12 @@ func mapTimestamp(s string) time.Time {
 }
 
 func mapCsvRow(row []string) Fund {
-	amountFloat, _ := strconv.ParseFloat(row[4], 64)
 	return Fund{
 		timestamp: mapTimestamp(row[0]),
-		Name:      row[2],
-		Amount:    amountFloat,
-		Source:    row[1],
-		Notes:     row[3],
+		Name:      row[1],
+		Amount:    row[3],
+		Source:    row[2],
+		Notes:     row[4],
 	}
 }
 
@@ -104,8 +101,8 @@ func fundsText() string {
 	template := "%s %s"
 	var text []string
 	for _, fund := range funds {
-		rupiahAmount := message.NewPrinter(message.MatchLanguage("id")).Sprintf("Rp%.0f", fund.Amount)
-		fundText := fmt.Sprintf(template, fund.Name, rupiahAmount)
+		// rupiahAmount := message.NewPrinter(message.MatchLanguage("id")).Sprintf("Rp%.0f", fund.Amount)
+		fundText := fmt.Sprintf(template, fund.Name, fund.Amount)
 		text = append(text, fundText)
 		log.Printf("Added fund text: %s", fundText)
 	}
