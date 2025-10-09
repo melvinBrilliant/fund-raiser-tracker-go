@@ -2,6 +2,7 @@ package fund
 
 import (
 	"encoding/csv"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -21,26 +22,29 @@ type Fund struct {
 	Notes     string
 }
 
-func downloadCSV() {
+func downloadCSV() error {
 	url := fmt.Sprintf("https://docs.google.com/spreadsheets/d/%s/export?format=csv&gid=%s", *config.SheetId, *config.Gid)
 	resp, err := http.Get(url)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	if resp.StatusCode != http.StatusOK {
-		log.Fatalf("Failed to download sheet (gid=%s): %s", *config.Gid, resp.Status)
+		log.Printf("Failed to download sheet (gid=%s): %s", *config.Gid, resp.Status)
+		return errors.New(fmt.Sprintf("Failed to download sheet (gid=%s): %s", *config.Gid, resp.Status));
 	}
 	defer resp.Body.Close()
 	out, err := os.Create("Sheet.csv")
 	if err != nil {
-		panic(err)
+		log.Printf("Failed to create Sheet.csv: %s", err)
+		return err
 	}
 	defer out.Close()
 	_, err = io.Copy(out, resp.Body)
 	if err != nil {
-		panic(err)
+		log.Printf("Failed to write to Sheet.csv: %s", err)
+		return err
 	}
-
+	return nil
 }
 
 func mapTimestamp(s string) time.Time {
@@ -88,16 +92,21 @@ func mapCsv() []Fund {
 	return funds
 }
 
-func latestFunds() []Fund {
+func latestFunds() ([]Fund, error) {
 	funds := mapCsv()
 	if len(funds) < *config.TotalFunds {
-		log.Fatalf("Not enough funds in CSV (found=%d, required=%d)", len(funds), config.TotalFunds)
+		errorMsg := fmt.Sprintf("Not enough funds in CSV (found=%d, required=%d)", len(funds), config.TotalFunds)
+		log.Print(errorMsg)
+		return nil, errors.New(errorMsg)
 	}
-	return funds[len(funds)-*config.TotalFunds:]
+	return funds[len(funds)-*config.TotalFunds:], nil
 }
 
-func fundsText() string {
-	funds := latestFunds()
+func fundsText() (string, error) {
+	funds, err := latestFunds()
+	if err != nil {	
+		return "", err
+	}
 	template := "%s %s"
 	var text []string
 	for _, fund := range funds {
@@ -106,11 +115,19 @@ func fundsText() string {
 		text = append(text, fundText)
 		log.Printf("Added fund text: %s", fundText)
 	}
-	return strings.Join(text, " | ")
+	return strings.Join(text, " | "), nil
 }
 
 func WriteFundsToTxt() {
-	downloadCSV()
-	text := fundsText()
+	err := downloadCSV()
+	if err != nil {
+		log.Printf("Error downloading CSV: %s", err)
+		return
+	}
+	text, err := fundsText()
+	if err != nil {
+		log.Printf("Error generating funds text: %s", err)
+		return
+	}
 	os.WriteFile("funds.txt", []byte(text), 0644)
 }
