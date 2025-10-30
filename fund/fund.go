@@ -30,7 +30,7 @@ func downloadCSV() error {
 	}
 	if resp.StatusCode != http.StatusOK {
 		log.Printf("Failed to download sheet (gid=%s): %s", *config.Gid, resp.Status)
-		return errors.New(fmt.Sprintf("Failed to download sheet (gid=%s): %s", *config.Gid, resp.Status));
+		return fmt.Errorf("FAILED TO DOWNLOAD SHEET (GID=%s): %s", *config.Gid, resp.Status);
 	}
 	defer resp.Body.Close()
 	out, err := os.Create("Sheet.csv")
@@ -115,7 +115,7 @@ func fundsText() (string, error) {
 		text = append(text, fundText)
 		log.Printf("Added fund text: %s", fundText)
 	}
-	return strings.Join(text, " | "), nil
+	return strings.Join(text, " | ") + " | ", nil
 }
 
 func WriteFundsToTxt() {
