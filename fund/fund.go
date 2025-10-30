@@ -118,6 +118,18 @@ func fundsText() (string, error) {
 	return strings.Join(text, " | ") + " | ", nil
 }
 
+func formatSpaces(s string) string {
+	maxLength := 135
+	if len(s) >= maxLength {
+		return s
+	}
+	remainingSpaces := maxLength - len(s)
+	for i := 0; i < remainingSpaces; i++ {
+		s = s + " "
+	}
+	return s
+}
+
 func WriteFundsToTxt() {
 	err := downloadCSV()
 	if err != nil {
@@ -125,6 +137,7 @@ func WriteFundsToTxt() {
 		return
 	}
 	text, err := fundsText()
+	text = formatSpaces(text)
 	if err != nil {
 		log.Printf("Error generating funds text: %s", err)
 		return
