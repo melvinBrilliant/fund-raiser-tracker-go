@@ -30,7 +30,7 @@ func downloadCSV() error {
 	}
 	if resp.StatusCode != http.StatusOK {
 		log.Printf("Failed to download sheet (gid=%s): %s", *config.Gid, resp.Status)
-		return fmt.Errorf("FAILED TO DOWNLOAD SHEET (GID=%s): %s", *config.Gid, resp.Status);
+		return fmt.Errorf("FAILED TO DOWNLOAD SHEET (GID=%s): %s", *config.Gid, resp.Status)
 	}
 	defer resp.Body.Close()
 	out, err := os.Create("Sheet.csv")
@@ -61,8 +61,6 @@ func mapCsvRow(row []string) Fund {
 		timestamp: mapTimestamp(row[0]),
 		Name:      row[1],
 		Amount:    row[3],
-		Source:    row[2],
-		Notes:     row[4],
 	}
 }
 
@@ -92,19 +90,59 @@ func mapCsv() []Fund {
 	return funds
 }
 
-func latestFunds() ([]Fund, error) {
+func selectFundsWindow(funds []Fund, startIndex, total int) ([]Fund, int) {
+	if len(funds) == 0 {
+		return nil, 0
+	}
+	if total <= 0 {
+		return nil, startIndex
+	}
+	if startIndex < 0 {
+		startIndex = 0
+	}
+	if startIndex >= len(funds) {
+		startIndex = 0
+	}
+
+	selectedEnd := min(startIndex+total, len(funds))
+
+	selected := funds[startIndex:selectedEnd]
+	if len(selected) < total {
+		return selected, startIndex
+	}
+
+	nextIndex := startIndex + 1
+	if nextIndex+total > len(funds) {
+		return selected, startIndex
+	}
+
+	return selected, nextIndex
+}
+
+func extractFunds() ([]Fund, error) {
 	funds := mapCsv()
-	if len(funds) < *config.TotalFunds {
-		errorMsg := fmt.Sprintf("Not enough funds in CSV (found=%d, required=%d)", len(funds), config.TotalFunds)
+	if len(funds) == 0 {
+		errorMsg := "No funds found in CSV"
 		log.Print(errorMsg)
 		return nil, errors.New(errorMsg)
 	}
-	return funds[len(funds)-*config.TotalFunds:], nil
+	if len(funds) < *config.TotalFunds {
+		errorMsg := fmt.Sprintf("Not enough funds in CSV (found=%d, required=%d)", len(funds), *config.TotalFunds)
+		log.Print(errorMsg)
+		return nil, errors.New(errorMsg)
+	}
+
+	selected, nextIndex := selectFundsWindow(funds, *config.StartIndex, *config.TotalFunds)
+	*config.StartIndex = nextIndex
+	if err := config.SaveStartIndex(*config.StartIndex, *config.StateFile); err != nil {
+		log.Printf("failed to persist start index: %v", err)
+	}
+	return selected, nil
 }
 
 func fundsText() (string, error) {
-	funds, err := latestFunds()
-	if err != nil {	
+	funds, err := extractFunds()
+	if err != nil {
 		return "", err
 	}
 	template := "%s %s"
