@@ -78,8 +78,8 @@ func SaveStartIndex(index int, statePath string) error {
 }
 
 func InitConfig() {
-	SheetId = flag.String("sheetid", "1GHJojMdDrp6pyORdZT5o1_0Njr0VTlG294IMtBcE124", "Google Sheet ID")
-	Gid = flag.String("gid", "718286749", "Google Sheet GID")
+	SheetId = flag.String("sheetid", "1s5nSkQX8TXh1x7AWi91s6i6feOofQaYPz3YdjlGUp8s", "Google Sheet ID")
+	Gid = flag.String("gid", "1492535891", "Google Sheet GID")
 	IntervalSeconds = flag.Int("interval", 20, "Interval in seconds")
 	TotalFunds = flag.Int("total", 4, "Total funds to show")
 	StateFile = flag.String("state-file", "fund_tracker_state.json", "Path to persisted start index state file")
