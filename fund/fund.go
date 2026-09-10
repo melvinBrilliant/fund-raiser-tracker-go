@@ -18,8 +18,6 @@ type Fund struct {
 	timestamp time.Time
 	Name      string
 	Amount    string
-	Source    string
-	Notes     string
 }
 
 func downloadCSV() error {
