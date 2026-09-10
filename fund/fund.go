@@ -60,7 +60,7 @@ func mapCsvRow(row []string) Fund {
 	return Fund{
 		timestamp: mapTimestamp(row[0]),
 		Name:      row[1],
-		Amount:    row[3],
+		Amount:    row[2],
 	}
 }
 
