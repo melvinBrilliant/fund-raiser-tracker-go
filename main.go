@@ -1,7 +1,6 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"log"
 	"time"
@@ -40,14 +39,11 @@ func main() {
 func runProcess() {
 	log.Println("Starting fund tracker...")
 	fund.WriteFundsToTxt()
-	runOnce := flag.String("once", "n", "Run once without scheduling")
-	flag.Parse()
-	if runOnce != nil && *runOnce == "y" {
+	if *config.RunOnce {
 		log.Println("Running once without scheduling...")
 		return
-	} else {
-		scheduledProcess()
 	}
+	scheduledProcess()
 }
 
 func scheduledProcess() {
