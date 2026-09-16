@@ -180,7 +180,7 @@ func InitConfig() {
 	TotalFunds = flag.Int("total", 4, "Total funds to show")
 	StateFile = flag.String("state-file", "fund_tracker_state.json", "Path to persisted start index state file")
 	OutputFormat = flag.String("output", "txt", "Output format: txt or html")
-	HTMLTemplateFile = flag.String("html-template", "templates/funds.html", "HTML template file")
+	HTMLTemplateFile = flag.String("html-template", "templates/funds-template.html", "HTML template file")
 	HTMLOutputFile = flag.String("html-output", "funds.html", "HTML output file")
 	TickerSpeed = flag.Int("ticker-speed", DefaultTickerSpeed, "Scrolling animation duration in seconds")
 	BackgroundColor = flag.String("background-color", DefaultBackgroundColor, "HTML background color")
