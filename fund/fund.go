@@ -4,6 +4,7 @@ import (
 	"encoding/csv"
 	"errors"
 	"fmt"
+	"html/template"
 	"io"
 	"log"
 	"net/http"
@@ -143,15 +144,7 @@ func fundsText() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	template := "%s %s"
-	var text []string
-	for _, fund := range funds {
-		// rupiahAmount := message.NewPrinter(message.MatchLanguage("id")).Sprintf("Rp%.0f", fund.Amount)
-		fundText := fmt.Sprintf(template, fund.Name, fund.Amount)
-		text = append(text, fundText)
-		log.Printf("Added fund text: %s", fundText)
-	}
-	return strings.Join(text, " | ") + " | ", nil
+	return fundsTextFrom(funds), nil
 }
 
 func formatSpaces(s string) string {
@@ -166,17 +159,72 @@ func formatSpaces(s string) string {
 	return s
 }
 
-func WriteFundsToTxt() {
+func writeFundsToTxt(text string) error {
+	return os.WriteFile("funds.txt", []byte(formatSpaces(text)), 0644)
+}
+
+func WriteFundsToHTML(funds []Fund) error {
+	tmpl, err := template.ParseFiles(*config.HTMLTemplateFile)
+	if err != nil {
+		return fmt.Errorf("parse HTML template: %w", err)
+	}
+	for _, fund := range funds {
+		log.Printf("Added fund text: %s %s", fund.Name, fund.Amount)
+	}
+
+	output, err := os.Create(*config.HTMLOutputFile)
+	if err != nil {
+		return fmt.Errorf("create HTML output: %w", err)
+	}
+	defer output.Close()
+
+	if err := tmpl.Execute(output, funds); err != nil {
+		return fmt.Errorf("render HTML template: %w", err)
+	}
+	return nil
+}
+
+func WriteFunds() {
 	err := downloadCSV()
 	if err != nil {
 		log.Printf("Error downloading CSV: %s", err)
 		return
 	}
+	funds, err := extractFunds()
+	if err != nil {
+		log.Printf("Error extracting funds: %s", err)
+		return
+	}
+
+	if *config.OutputFormat == "html" {
+		if err := WriteFundsToHTML(funds); err != nil {
+			log.Printf("Error generating funds HTML: %s", err)
+		}
+		return
+	}
+
+	if err := writeFundsToTxt(fundsTextFrom(funds)); err != nil {
+		log.Printf("Error writing funds.txt: %s", err)
+	}
+}
+
+func fundsTextFrom(funds []Fund) string {
+	var text []string
+	for _, fund := range funds {
+		fundText := fmt.Sprintf("%s %s", fund.Name, fund.Amount)
+		text = append(text, fundText)
+		log.Printf("Added fund text: %s", fundText)
+	}
+	return strings.Join(text, " | ") + " | "
+}
+
+func WriteFundsToTxt() {
 	text, err := fundsText()
-	text = formatSpaces(text)
 	if err != nil {
 		log.Printf("Error generating funds text: %s", err)
 		return
 	}
-	os.WriteFile("funds.txt", []byte(text), 0644)
+	if err := writeFundsToTxt(text); err != nil {
+		log.Printf("Error writing funds.txt: %s", err)
+	}
 }

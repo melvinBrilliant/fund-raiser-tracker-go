@@ -16,6 +16,10 @@ var (
 	TotalFunds         *int
 	StartIndex         *int
 	StateFile          *string
+	OutputFormat       *string
+	HTMLTemplateFile   *string
+	HTMLOutputFile     *string
+	RunOnce            *string
 	LoadStartIndexFlag *bool
 	SaveStartIndexFlag *int
 )
@@ -83,6 +87,10 @@ func InitConfig() {
 	IntervalSeconds = flag.Int("interval", 20, "Interval in seconds")
 	TotalFunds = flag.Int("total", 4, "Total funds to show")
 	StateFile = flag.String("state-file", "fund_tracker_state.json", "Path to persisted start index state file")
+	OutputFormat = flag.String("output", "txt", "Output format: txt or html")
+	HTMLTemplateFile = flag.String("html-template", "templates/funds.html", "HTML template file")
+	HTMLOutputFile = flag.String("html-output", "funds.html", "HTML output file")
+	RunOnce = flag.String("once", "n", "Run once without scheduling (use y)")
 	StartIndex = flag.Int("start", -1, "Start index for donor window; defaults to the value stored in state file")
 	LoadStartIndexFlag = flag.Bool("load-start-index", false, "Load the persisted start index and print it, then exit")
 	SaveStartIndexFlag = flag.Int("save-start-index", -1, "Persist a start index to the state file and exit")

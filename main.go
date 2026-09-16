@@ -12,6 +12,11 @@ import (
 
 func main() {
 	config.InitConfig()
+	if len(flag.Args()) > 0 && flag.Arg(0) == "help" {
+		fmt.Println("Fund Raiser Tracker available flags:")
+		flag.PrintDefaults()
+		return
+	}
 
 	if *config.LoadStartIndexFlag {
 		index, err := config.LoadStartIndex(*config.StateFile)
@@ -34,15 +39,14 @@ func main() {
 	log.Println("IntervalSeconds: " + fmt.Sprint(*config.IntervalSeconds))
 	log.Println("TotalFunds: " + fmt.Sprint(*config.TotalFunds))
 	log.Println("StartIndex: " + fmt.Sprint(*config.StartIndex))
+	log.Println("OutputFormat: " + *config.OutputFormat)
 	runProcess()
 }
 
 func runProcess() {
 	log.Println("Starting fund tracker...")
-	fund.WriteFundsToTxt()
-	runOnce := flag.String("once", "n", "Run once without scheduling")
-	flag.Parse()
-	if runOnce != nil && *runOnce == "y" {
+	fund.WriteFunds()
+	if *config.RunOnce == "y" {
 		log.Println("Running once without scheduling...")
 		return
 	} else {
@@ -55,6 +59,6 @@ func scheduledProcess() {
 	defer ticker.Stop()
 	for t := range ticker.C {
 		log.Printf("Scheduled task running at %v...\n", t)
-		fund.WriteFundsToTxt()
+		fund.WriteFunds()
 	}
 }

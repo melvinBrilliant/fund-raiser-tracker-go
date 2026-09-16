@@ -43,4 +43,5 @@ fund-raiser-tracker-go
 # Generated CSV and text outputs
 *.csv
 *.txt
+funds.html
 *.exe
