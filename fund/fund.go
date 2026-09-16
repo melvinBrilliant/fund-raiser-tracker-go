@@ -163,7 +163,17 @@ func writeFundsToTxt(text string) error {
 	return os.WriteFile("funds.txt", []byte(formatSpaces(text)), 0644)
 }
 
+type htmlTemplateData struct {
+	Funds             []Fund
+	AnimationDuration int
+	BackgroundColor   string
+	FontColor         string
+}
+
 func WriteFundsToHTML(funds []Fund) error {
+	if *config.TickerSpeed <= 0 {
+		return fmt.Errorf("ticker speed must be greater than zero")
+	}
 	tmpl, err := template.ParseFiles(*config.HTMLTemplateFile)
 	if err != nil {
 		return fmt.Errorf("parse HTML template: %w", err)
@@ -178,7 +188,13 @@ func WriteFundsToHTML(funds []Fund) error {
 	}
 	defer output.Close()
 
-	if err := tmpl.Execute(output, funds); err != nil {
+	data := htmlTemplateData{
+		Funds:             funds,
+		AnimationDuration: *config.TickerSpeed,
+		BackgroundColor:   *config.BackgroundColor,
+		FontColor:         *config.FontColor,
+	}
+	if err := tmpl.Execute(output, data); err != nil {
 		return fmt.Errorf("render HTML template: %w", err)
 	}
 	return nil

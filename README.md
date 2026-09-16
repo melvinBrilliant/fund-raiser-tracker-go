@@ -47,9 +47,14 @@ Available flags:
 - `-output`: Output format, either `txt` (default) or `html`
 - `-html-template`: HTML template path, default `templates/funds.html`
 - `-html-output`: HTML output path, default `funds.html`
+- `-ticker-speed`: Scrolling animation duration in seconds. The value is persisted in `fund_tracker_state.json` and restored on the next startup; default is `45` only when the state file has no saved value
+- `-background-color`: HTML background color. The value is persisted in `fund_tracker_state.json`; default is `#011D66`
+- `-font-color`: HTML ticker font color. The value is persisted in `fund_tracker_state.json`; default is `#f2cc8f`
 - `-load-start-index`: Load the persisted start index and print it, then exit
 - `-save-start-index=N`: Persist a start index value and exit
 - `-once=y`: Run once without scheduling a repeating loop
+
+The `sheet_id` and `gid` values are persisted in `fund_tracker_state.json` and restored on the next startup when the corresponding flags are not provided. Passing `-sheetid` or `-gid` explicitly updates the saved values.
 
 To display all available flags and their descriptions, use:
 
@@ -88,6 +93,8 @@ This is implemented using atomic file writes:
 - read the state file on startup if `-start` is not explicitly provided
 
 This reduces the risk of corrupted state if the process is interrupted during a write.
+
+The same state file also stores `ticker_speed`, `background_color`, and `font_color`, so the saved HTML settings remain the source of truth after an application restart. Passing the corresponding flags explicitly updates the persisted values.
 
 ## Running the app
 

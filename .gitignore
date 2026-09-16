@@ -38,6 +38,7 @@ fund_tracker_state.json
 
 # Go build outputs
 fund-raiser-tracker-go
+tracker
 *.bin
 
 # Generated CSV and text outputs
