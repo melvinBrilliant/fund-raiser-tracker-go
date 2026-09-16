@@ -65,29 +65,37 @@ func TestWindowFundsResetsWhenIndexRunsPastEnd(t *testing.T) {
 func TestWriteFundsToHTMLRendersFunds(t *testing.T) {
 	templatePath := t.TempDir() + "/funds.html"
 	outputPath := t.TempDir() + "/output.html"
-	if err := os.WriteFile(templatePath, []byte("{{range .Funds}}<p>{{.Name}} {{.Amount}}</p>{{end}} {{.AnimationDuration}} {{.BackgroundColor}} {{.FontColor}}"), 0644); err != nil {
+	if err := os.WriteFile(templatePath, []byte("{{range .Funds}}<p>{{.Name}} {{.Amount}}</p>{{end}} {{.AnimationDuration}} {{.FontSize}}px {{.BackgroundColor}} {{.FontColor}}"), 0644); err != nil {
 		t.Fatal(err)
 	}
 
 	previousTemplate := config.HTMLTemplateFile
 	previousOutput := config.HTMLOutputFile
+	previousInterval := config.IntervalSeconds
 	previousSpeed := config.TickerSpeed
+	previousFontSize := config.FontSize
 	previousBackground := config.BackgroundColor
 	previousFont := config.FontColor
 	templateFile := templatePath
 	outputFile := outputPath
+	refreshInterval := 20
 	tickerSpeed := 30
+	fontSize := 48
 	backgroundColor := "#123456"
 	fontColor := "#abcdef"
 	config.HTMLTemplateFile = &templateFile
 	config.HTMLOutputFile = &outputFile
+	config.IntervalSeconds = &refreshInterval
 	config.TickerSpeed = &tickerSpeed
+	config.FontSize = &fontSize
 	config.BackgroundColor = &backgroundColor
 	config.FontColor = &fontColor
 	t.Cleanup(func() {
 		config.HTMLTemplateFile = previousTemplate
 		config.HTMLOutputFile = previousOutput
+		config.IntervalSeconds = previousInterval
 		config.TickerSpeed = previousSpeed
+		config.FontSize = previousFontSize
 		config.BackgroundColor = previousBackground
 		config.FontColor = previousFont
 	})
@@ -106,6 +114,9 @@ func TestWriteFundsToHTMLRendersFunds(t *testing.T) {
 	}
 	if !strings.Contains(string(data), "30") {
 		t.Fatalf("rendered HTML does not contain ticker speed: %s", data)
+	}
+	if !strings.Contains(string(data), "48px") {
+		t.Fatalf("rendered HTML does not contain font size: %s", data)
 	}
 	if !strings.Contains(string(data), "#123456") || !strings.Contains(string(data), "#abcdef") {
 		t.Fatalf("rendered HTML does not contain colors: %s", data)

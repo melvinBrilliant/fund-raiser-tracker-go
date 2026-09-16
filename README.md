@@ -48,6 +48,7 @@ Available flags:
 - `-html-template`: HTML template path, default `templates/funds.html`
 - `-html-output`: HTML output path, default `funds.html`
 - `-ticker-speed`: Scrolling animation duration in seconds. The value is persisted in `fund_tracker_state.json` and restored on the next startup; default is `45` only when the state file has no saved value
+- `-font-size`: HTML ticker font size in pixels. The value is persisted in `fund_tracker_state.json` and restored on the next startup; default is `48` only when the state file has no saved value
 - `-background-color`: HTML background color. The value is persisted in `fund_tracker_state.json`; default is `#011D66`
 - `-font-color`: HTML ticker font color. The value is persisted in `fund_tracker_state.json`; default is `#f2cc8f`
 - `-load-start-index`: Load the persisted start index and print it, then exit

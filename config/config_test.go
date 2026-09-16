@@ -40,7 +40,7 @@ func TestLoadStartIndexCreatesMissingStateFile(t *testing.T) {
 
 func TestLoadStateUsesPersistedTickerSpeed(t *testing.T) {
 	statePath := filepath.Join(t.TempDir(), "state.json")
-	if err := SaveState("sheet-123", "456", 8, 20, "#123456", "#abcdef", statePath); err != nil {
+	if err := SaveStateWithInterval("sheet-123", "456", 8, 12, 20, 48, "#123456", "#abcdef", statePath); err != nil {
 		t.Fatal(err)
 	}
 
@@ -48,7 +48,7 @@ func TestLoadStateUsesPersistedTickerSpeed(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if state.SheetID != "sheet-123" || state.GID != "456" || state.StartIndex != 8 || state.TickerSpeed != 20 || state.BackgroundColor != "#123456" || state.FontColor != "#abcdef" {
+	if state.SheetID != "sheet-123" || state.GID != "456" || state.StartIndex != 8 || state.IntervalSeconds != 12 || state.TickerSpeed != 20 || state.FontSize != 48 || state.BackgroundColor != "#123456" || state.FontColor != "#abcdef" {
 		t.Fatalf("unexpected state: %#v", state)
 	}
 }

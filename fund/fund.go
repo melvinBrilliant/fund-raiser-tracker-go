@@ -166,6 +166,8 @@ func writeFundsToTxt(text string) error {
 type htmlTemplateData struct {
 	Funds             []Fund
 	AnimationDuration int
+	RefreshInterval   int
+	FontSize          int
 	BackgroundColor   string
 	FontColor         string
 }
@@ -191,6 +193,8 @@ func WriteFundsToHTML(funds []Fund) error {
 	data := htmlTemplateData{
 		Funds:             funds,
 		AnimationDuration: *config.TickerSpeed,
+		RefreshInterval:   *config.IntervalSeconds,
+		FontSize:          *config.FontSize,
 		BackgroundColor:   *config.BackgroundColor,
 		FontColor:         *config.FontColor,
 	}

@@ -14,22 +14,33 @@
 
     * { box-sizing: border-box; }
 
+    html {
+      background-color: #011D66;
+      background-color: var(--background);
+    }
+
     body {
-      align-items: center;
-      background: var(--background);
+      background: transparent;
       color: var(--foreground);
-      display: flex;
       font-family: Georgia, serif;
-      justify-content: center;
       margin: 0;
-      min-height: 100vh;
       overflow: hidden;
+      width: 100%;
+      height: 100%;
     }
 
     .ticker {
+      align-items: center;
+      background-color: #011D66;
+      background-color: var(--background);
+      bottom: 0;
+      display: flex;
+      height: clamp(64px, 10vh, 120px);
+      left: 0;
       overflow: hidden;
+      position: fixed;
       white-space: nowrap;
-      width: 100%;
+      width: 100vw;
     }
 
     .ticker__track {
@@ -40,7 +51,7 @@
 
     .ticker__item {
       color: var(--accent);
-      font-size: clamp(1.5rem, 5vw, 4rem);
+      font-size: {{.FontSize}}px;
       font-weight: bold;
       margin-right: 4rem;
     }
@@ -61,5 +72,15 @@
       {{range .Funds}}<span class="ticker__item">{{.Name}} {{.Amount}}</span>{{end}}
     </div>
   </main>
+  <script>
+    const refreshInterval = {{.RefreshInterval}};
+    if (refreshInterval > 0) {
+      setTimeout(() => {
+        const refreshedURL = new URL(window.location.href);
+        refreshedURL.searchParams.set("refresh", Date.now());
+        window.location.replace(refreshedURL.toString());
+      }, refreshInterval * 1000);
+    }
+  </script>
 </body>
 </html>
