@@ -22,7 +22,7 @@
     body {
       background: transparent;
       color: var(--foreground);
-      font-family: Georgia, serif;
+      font-family: Arial, Helvetica, sans-serif;
       margin: 0;
       overflow: hidden;
       width: 100%;
@@ -46,7 +46,17 @@
     .ticker__track {
       animation: berjalan {{.AnimationDuration}}s linear infinite;
       display: inline-block;
+      opacity: 0;
       padding-left: 100%;
+      transition: opacity 500ms ease;
+    }
+
+    .ticker.is-loaded .ticker__track {
+      opacity: 1;
+    }
+
+    .ticker.is-refreshing .ticker__track {
+      opacity: 0;
     }
 
     .ticker__item {
@@ -73,12 +83,17 @@
     </div>
   </main>
   <script>
+    const ticker = document.querySelector(".ticker");
+    requestAnimationFrame(() => ticker.classList.add("is-loaded"));
+
     const refreshInterval = {{.RefreshInterval}};
     if (refreshInterval > 0) {
       setTimeout(() => {
+        ticker.classList.remove("is-loaded");
+        ticker.classList.add("is-refreshing");
         const refreshedURL = new URL(window.location.href);
         refreshedURL.searchParams.set("refresh", Date.now());
-        window.location.replace(refreshedURL.toString());
+        setTimeout(() => window.location.replace(refreshedURL.toString()), 500);
       }, refreshInterval * 1000);
     }
   </script>
