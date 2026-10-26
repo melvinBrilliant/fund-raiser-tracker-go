@@ -31,6 +31,18 @@ go.work.sum
 # .idea/
 # .vscode/
 
+# Generated app state and runtime artifacts
+fund_tracker_state.json
+*.state.json
+*.db
+
+# Go build outputs
+fund-raiser-tracker-go
+tracker
+*.bin
+
+# Generated CSV and text outputs
 *.csv
-*.exe
 *.txt
+funds.html
+*.exe

@@ -4,6 +4,7 @@ import (
 	"encoding/csv"
 	"errors"
 	"fmt"
+	"html/template"
 	"io"
 	"log"
 	"net/http"
@@ -18,8 +19,6 @@ type Fund struct {
 	timestamp time.Time
 	Name      string
 	Amount    string
-	Source    string
-	Notes     string
 }
 
 func downloadCSV() error {
@@ -30,7 +29,7 @@ func downloadCSV() error {
 	}
 	if resp.StatusCode != http.StatusOK {
 		log.Printf("Failed to download sheet (gid=%s): %s", *config.Gid, resp.Status)
-		return fmt.Errorf("FAILED TO DOWNLOAD SHEET (GID=%s): %s", *config.Gid, resp.Status);
+		return fmt.Errorf("FAILED TO DOWNLOAD SHEET (GID=%s): %s", *config.Gid, resp.Status)
 	}
 	defer resp.Body.Close()
 	out, err := os.Create("Sheet.csv")
@@ -60,9 +59,7 @@ func mapCsvRow(row []string) Fund {
 	return Fund{
 		timestamp: mapTimestamp(row[0]),
 		Name:      row[1],
-		Amount:    row[3],
-		Source:    row[2],
-		Notes:     row[4],
+		Amount:    row[2],
 	}
 }
 
@@ -92,30 +89,62 @@ func mapCsv() []Fund {
 	return funds
 }
 
-func latestFunds() ([]Fund, error) {
+func selectFundsWindow(funds []Fund, startIndex, total int) ([]Fund, int) {
+	if len(funds) == 0 {
+		return nil, 0
+	}
+	if total <= 0 {
+		return nil, startIndex
+	}
+	if startIndex < 0 {
+		startIndex = 0
+	}
+	if startIndex >= len(funds) {
+		startIndex = 0
+	}
+
+	selectedEnd := min(startIndex+total, len(funds))
+
+	selected := funds[startIndex:selectedEnd]
+	if len(selected) < total {
+		return selected, startIndex
+	}
+
+	nextIndex := startIndex + 1
+	if nextIndex+total > len(funds) {
+		return selected, startIndex
+	}
+
+	return selected, nextIndex
+}
+
+func extractFunds() ([]Fund, error) {
 	funds := mapCsv()
-	if len(funds) < *config.TotalFunds {
-		errorMsg := fmt.Sprintf("Not enough funds in CSV (found=%d, required=%d)", len(funds), config.TotalFunds)
+	if len(funds) == 0 {
+		errorMsg := "No funds found in CSV"
 		log.Print(errorMsg)
 		return nil, errors.New(errorMsg)
 	}
-	return funds[len(funds)-*config.TotalFunds:], nil
+	if len(funds) < *config.TotalFunds {
+		errorMsg := fmt.Sprintf("Not enough funds in CSV (found=%d, required=%d)", len(funds), *config.TotalFunds)
+		log.Print(errorMsg)
+		return nil, errors.New(errorMsg)
+	}
+
+	selected, nextIndex := selectFundsWindow(funds, *config.StartIndex, *config.TotalFunds)
+	*config.StartIndex = nextIndex
+	if err := config.SaveStartIndex(*config.StartIndex, *config.StateFile); err != nil {
+		log.Printf("failed to persist start index: %v", err)
+	}
+	return selected, nil
 }
 
 func fundsText() (string, error) {
-	funds, err := latestFunds()
-	if err != nil {	
+	funds, err := extractFunds()
+	if err != nil {
 		return "", err
 	}
-	template := "%s %s"
-	var text []string
-	for _, fund := range funds {
-		// rupiahAmount := message.NewPrinter(message.MatchLanguage("id")).Sprintf("Rp%.0f", fund.Amount)
-		fundText := fmt.Sprintf(template, fund.Name, fund.Amount)
-		text = append(text, fundText)
-		log.Printf("Added fund text: %s", fundText)
-	}
-	return strings.Join(text, " | ") + " | ", nil
+	return fundsTextFrom(funds), nil
 }
 
 func formatSpaces(s string) string {
@@ -130,17 +159,92 @@ func formatSpaces(s string) string {
 	return s
 }
 
-func WriteFundsToTxt() {
+func writeFundsToTxt(text string) error {
+	return os.WriteFile("funds.txt", []byte(formatSpaces(text)), 0644)
+}
+
+type htmlTemplateData struct {
+	Funds             []Fund
+	AnimationDuration int
+	RefreshInterval   int
+	FontSize          int
+	BackgroundColor   string
+	FontColor         string
+}
+
+func WriteFundsToHTML(funds []Fund) error {
+	if *config.TickerSpeed <= 0 {
+		return fmt.Errorf("ticker speed must be greater than zero")
+	}
+	tmpl, err := template.ParseFiles(*config.HTMLTemplateFile)
+	if err != nil {
+		return fmt.Errorf("parse HTML template: %w", err)
+	}
+	for _, fund := range funds {
+		log.Printf("Added fund text: %s %s", fund.Name, fund.Amount)
+	}
+
+	output, err := os.Create(*config.HTMLOutputFile)
+	if err != nil {
+		return fmt.Errorf("create HTML output: %w", err)
+	}
+	defer output.Close()
+
+	data := htmlTemplateData{
+		Funds:             funds,
+		AnimationDuration: *config.TickerSpeed,
+		RefreshInterval:   *config.IntervalSeconds,
+		FontSize:          *config.FontSize,
+		BackgroundColor:   *config.BackgroundColor,
+		FontColor:         *config.FontColor,
+	}
+	if err := tmpl.Execute(output, data); err != nil {
+		return fmt.Errorf("render HTML template: %w", err)
+	}
+	return nil
+}
+
+func WriteFunds() {
 	err := downloadCSV()
 	if err != nil {
 		log.Printf("Error downloading CSV: %s", err)
 		return
 	}
+	funds, err := extractFunds()
+	if err != nil {
+		log.Printf("Error extracting funds: %s", err)
+		return
+	}
+
+	if *config.OutputFormat == "html" {
+		if err := WriteFundsToHTML(funds); err != nil {
+			log.Printf("Error generating funds HTML: %s", err)
+		}
+		return
+	}
+
+	if err := writeFundsToTxt(fundsTextFrom(funds)); err != nil {
+		log.Printf("Error writing funds.txt: %s", err)
+	}
+}
+
+func fundsTextFrom(funds []Fund) string {
+	var text []string
+	for _, fund := range funds {
+		fundText := fmt.Sprintf("%s %s", fund.Name, fund.Amount)
+		text = append(text, fundText)
+		log.Printf("Added fund text: %s", fundText)
+	}
+	return strings.Join(text, " | ") + " | "
+}
+
+func WriteFundsToTxt() {
 	text, err := fundsText()
-	text = formatSpaces(text)
 	if err != nil {
 		log.Printf("Error generating funds text: %s", err)
 		return
 	}
-	os.WriteFile("funds.txt", []byte(text), 0644)
+	if err := writeFundsToTxt(text); err != nil {
+		log.Printf("Error writing funds.txt: %s", err)
+	}
 }
